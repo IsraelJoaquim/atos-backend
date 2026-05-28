@@ -1,99 +1,126 @@
 import {
   createTicket,
   deleteTicket,
+  getTicketById,
   getTickets,
-  getTicketsById,
-  updateTicket,
   updateTicketContent,
+  updateTicketStatus,
 } from '../services/ticketService.js';
 
+// ─── CREATE ───────────────────────────────────────────────────────────────────
+
 export async function createTicketController(req, reply) {
-  console.log('Criando chamado...');
   try {
     const { title, description } = req.body;
-    console.log('Usuário autenticado:', req.user);
+    const { id: userId, tenantId } = req.user;
 
-    const userId = req.user.id;
-    const tenantId = req.user.tenantId;
+    if (!title || !description) {
+      return reply.status(400).send({ error: 'Título e descrição são obrigatórios.' });
+    }
 
     const ticket = await createTicket({ title, description, userId, tenantId });
-    console.log(ticket);
     return reply.status(201).send({ message: 'Chamado criado!', ticket });
   } catch (error) {
-    console.log('aqui');
     return reply.status(400).send({ error: error.message });
   }
 }
 
+// ─── READ ─────────────────────────────────────────────────────────────────────
+
 export async function getTicketsController(req, reply) {
-  const tickets = await getTickets();
-  return reply.send(tickets);
+  try {
+    const { id: userId, tenantId, role } = req.user;
+    const tickets = await getTickets({ tenantId, userId, role });
+    return reply.send(tickets);
+  } catch (error) {
+    return reply.status(500).send({ error: error.message });
+  }
 }
 
-export async function getTicketsByIdController(req, reply) {
-  const ticket = await getTicketsById(req.params.id);
-  if (!ticket)
-    return reply.status(404).send({ error: 'Chamado não encontrado' });
-  return reply.send(ticket);
+export async function getTicketByIdController(req, reply) {
+  try {
+    const { id: userId, tenantId, role } = req.user;
+    const ticket = await getTicketById(req.params.id, tenantId, userId, role);
+    if (!ticket) return reply.status(404).send({ error: 'Chamado não encontrado.' });
+    return reply.send(ticket);
+  } catch (error) {
+    return reply.status(500).send({ error: error.message });
+  }
 }
+
+// ─── UPDATE CONTENT (usuario) ─────────────────────────────────────────────────
 
 export async function updateTicketContentController(req, reply) {
-  const userRole = req.user.role;
   try {
-    if (userRole !== 'usuario') {
-      return reply.status(403).send({ error: 'acesso negado' });
+    if (req.user.role !== 'usuario') {
+      return reply.status(403).send({ error: 'Acesso negado.' });
     }
 
     const { title, description } = req.body;
-    const ticketId = req.params.id;
-    const userId = req.user.id;
-    const affectedRows = await updateTicketContent(
+    const { id: userId, tenantId } = req.user;
+
+    if (!title || !description) {
+      return reply.status(400).send({ error: 'Título e descrição são obrigatórios.' });
+    }
+
+    const ticket = await updateTicketContent({
+      ticketId: req.params.id,
       userId,
+      tenantId,
       title,
       description,
-      ticketId,
-    );
+    });
 
-    if (affectedRows === 0)
-      return reply.status(404).send({ error: 'Chamado não encontrado' });
-    return reply.send({ message: 'Chamado atualizado!' });
+    return reply.send({ message: 'Chamado atualizado!', ticket });
   } catch (error) {
     return reply.status(400).send({ error: error.message });
   }
 }
 
-export async function updateTicketController(req, reply) {
-  const userRole = req.user.role;
+// ─── UPDATE STATUS (tecnico) ──────────────────────────────────────────────────
+
+export async function updateTicketStatusController(req, reply) {
   try {
-    if (userRole !== 'tecnico') {
-      return reply.status(403).send({ error: 'acesso negado' });
+    if (req.user.role !== 'tecnico' && req.user.role !== 'admin') {
+      return reply.status(403).send({ error: 'Acesso negado.' });
     }
 
-    const { status, assignedTo } = req.body;
-    const affectedRows = await updateTicket(req.params.id, status, assignedTo);
+    const { status, observacao } = req.body;
+    const { id: tecnicoId, name: tecnicoNome, tenantId } = req.user;
 
-    if (affectedRows === 0)
-      return reply.status(404).send({ error: 'Chamado não encontrado' });
-    return reply.send({ message: 'Chamado atualizado!' });
+    if (!status) {
+      return reply.status(400).send({ error: 'Status é obrigatório.' });
+    }
+
+    const validStatus = ['aberto', 'em_andamento', 'finalizado'];
+    if (!validStatus.includes(status)) {
+      return reply.status(400).send({ error: 'Status inválido.' });
+    }
+
+    const ticket = await updateTicketStatus({
+      ticketId: req.params.id,
+      tenantId,
+      tecnicoId,
+      tecnicoNome,
+      novoStatus: status,
+      observacao,
+    });
+
+    return reply.send({ message: 'Status atualizado!', ticket });
   } catch (error) {
     return reply.status(400).send({ error: error.message });
   }
 }
+
+// ─── DELETE ───────────────────────────────────────────────────────────────────
 
 export async function deleteTicketController(req, reply) {
-  const userRole = req.user.role;
   try {
-    if (userRole !== 'admin') {
-      return reply
-        .status(403)
-        .send({
-          error:
-            'Apenas administradores tem permissão para deleção de chamados',
-        });
+    if (req.user.role !== 'admin') {
+      return reply.status(403).send({ error: 'Apenas administradores podem deletar chamados.' });
     }
-    const affectedRows = await deleteTicket(req.params.id);
-    if (affectedRows === 0)
-      return reply.status(404).send({ error: 'Chamado não encontrado' });
+
+    await deleteTicket(req.params.id, req.user.tenantId);
     return reply.send({ message: 'Chamado deletado!' });
   } catch (error) {
     return reply.status(400).send({ error: error.message });

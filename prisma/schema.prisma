@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../node_modules/.prisma/client"
@@ -26,34 +20,62 @@ enum Status {
   finalizado
 }
 
-model Users {
-  id                 String  @id @default(uuid())
-  tenantId           String
-  name               String
-  email              String  @unique
-  password           String
-  role               Role
-  active             Boolean @default(true)
-  verification_token String?
-  email_verified     Boolean @default(false)
-
+model Tenants {
+  id        String   @id @default(uuid())
+  name      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-chamados Chamados[]
+  users    Users[]
+  chamados Chamados[]
+}
+
+model Users {
+  id                 String   @id @default(uuid())
+  tenantId           String
+  name               String
+  email              String   @unique
+  password           String
+  role               Role
+  active             Boolean  @default(true)
+  verification_token String?
+  email_verified     Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  tenant        Tenants         @relation(fields: [tenantId], references: [id])
+  chamados      Chamados[]
+  movimentacoes Movimentacoes[]
 }
 
 model Chamados {
-  id          String @id @default(uuid())
-  ticket      String @unique
-  tenantId    String
-  title       String
-  description String
-  status      Status
-  userId      String
+  id             String   @id @default(uuid())
+  ticket         String   @unique
+  tenantId       String
+  title          String
+  description    String
+  status         Status   @default(aberto)
+  userId         String
+  assignedToId   String?
+  assignedToName String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  tenant        Tenants         @relation(fields: [tenantId], references: [id])
+  user          Users           @relation(fields: [userId], references: [id])
+  movimentacoes Movimentacoes[]
+}
 
-  user Users @relation(fields: [userId], references: [id])
+model Movimentacoes {
+  id           String   @id @default(uuid())
+  ticketId     String
+  tecnicoId    String?
+  tecnicoNome  String?
+  statusAntes  Status
+  statusDepois Status
+  observacao   String?
+  createdAt    DateTime @default(now())
+
+  ticket  Chamados @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  tecnico Users?   @relation(fields: [tecnicoId], references: [id])
 }

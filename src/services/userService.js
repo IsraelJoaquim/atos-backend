@@ -2,18 +2,11 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from '../../lib/prisma.js';
 
-export async function registerUser(
-  name,
-  email,
-  password,
-  role,
-  verificationToken,
-  email_verified,
-  tenantId,
-) {
+// ─── REGISTER ─────────────────────────────────────────────────────────────────
+
+export async function registerUser(name, email, password, role, verificationToken, tenantId) {
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  // Insere o usuario com o token e email_verified como false
   const user = await prisma.users.create({
     data: {
       name,
@@ -21,65 +14,20 @@ export async function registerUser(
       password: hashedPassword,
       role,
       verification_token: verificationToken,
-      email_verified,
+      email_verified: false,
       tenantId,
     },
   });
   return user;
 }
 
-export async function loginUser(email, password) {
-  const user = await prisma.users.findUnique({
-    where: { email },
-  });
-
-  if (!user) throw new Error('Usuário não encontrado.');
-  if (user.email_verified !== true) throw new Error('Usuario não verificado.');
-  if (user.active !== true) throw new Error('Usuario inativo!');
-
-  const match = await bcrypt.compare(password, user.password);
-  if (!match) throw new Error('Senha invalida.');
-
-  const token = jwt.sign(
-    { id: user.id, role: user.role, tenantId: user.tenantId },
-    process.env.JWT_SECRET,
-    { expiresIn: '1h' },
-  );
-  return { token, user };
-}
-
-export async function softDeleteUser(id, tenantId) {
-  if (!id || !tenantId) {
-    throw new Error('ID e tenantId são obrigatórios.');
-  }
-  try {
-    const result = await prisma.users.updateMany({
-      where: {
-        id: id,
-        tenantId: tenantId,
-      },
-      data: {
-        active: false,
-      },
-    });
-    if (result.count === 0) {
-      throw new Error('usuario não encontrado');
-    }
-    return { message: 'Usuario desativado com sucesso' };
-  } catch (error) {
-    throw new Error(error.message);
-  }
-}
+// ─── VERIFY EMAIL ─────────────────────────────────────────────────────────────
 
 export async function verifyEmailToken(email, token) {
-  // Busca o usuario pelo email
-  const user = await prisma.users.findUnique({
-    where: { email },
-  });
+  const user = await prisma.users.findUnique({ where: { email } });
 
-  if (user.verification_token !== token) {
-    throw new Error('Token invalido.');
-  }
+  if (!user) throw new Error('Usuário não encontrado.');
+  if (user.verification_token !== token) throw new Error('Token inválido.');
 
   await prisma.users.update({
     where: { email },
@@ -89,7 +37,73 @@ export async function verifyEmailToken(email, token) {
     },
   });
 
+  return { message: 'Email verificado com sucesso!' };
+}
+
+// ─── LOGIN ────────────────────────────────────────────────────────────────────
+
+export async function loginUser(email, password) {
+  const user = await prisma.users.findUnique({
+  where: { email },
+  include: {
+    tenant: true,
+  },
+});
+
+  if (!user) throw new Error('Usuário não encontrado.');
+  if (!user.email_verified) throw new Error('E-mail não verificado.');
+  if (!user.active) throw new Error('Usuário inativo.');
+
+  const match = await bcrypt.compare(password, user.password);
+  if (!match) throw new Error('Senha inválida.');
+
+  const token = jwt.sign(
+    { id: user.id, name: user.name, role: user.role, tenantId: user.tenantId },
+    process.env.JWT_SECRET,
+    { expiresIn: '8h' },
+  );
+
+  // retorna apenas campos necessários, sem senha nem token de verificação
+  const {password: _,
+    verification_token: __,tenant,...safeUser} = user;
   return {
-    message: 'Email verificado com sucesso!',
+    token,
+    user: {
+      ...safeUser,
+      tenantName: tenant.name,
+    },
   };
+}
+
+// ─── GET USERS (admin) ────────────────────────────────────────────────────────
+
+export async function getUsers(tenantId) {
+  const users = await prisma.users.findMany({
+    where: { tenantId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      active: true,
+      email_verified: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+  return users;
+}
+
+// ─── SOFT DELETE ──────────────────────────────────────────────────────────────
+
+export async function softDeleteUser(id, tenantId) {
+  if (!id || !tenantId) throw new Error('ID e tenantId são obrigatórios.');
+
+  const result = await prisma.users.updateMany({
+    where: { id, tenantId },
+    data: { active: false },
+  });
+
+  if (result.count === 0) throw new Error('Usuário não encontrado.');
+  return { message: 'Usuário desativado com sucesso.' };
 }
