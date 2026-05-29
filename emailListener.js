@@ -148,6 +148,15 @@ function fetchUnseenEmails(imap) {
 // }
 
 export function startEmailListener() {
+
+   if (process.env.NODE_ENV === 'production') {
+    console.log('[IMAP] Desabilitado em produção.');
+    return;
+  }
+
+  console.log('[IMAP] Iniciando listener de emails...');
+
+
   console.log('[IMAP] Iniciando listener de emails...');
 
   function connect() {
