@@ -34,8 +34,8 @@ export async function sendEmail(to, subject, text) {
       secure: process.env.EMAIL_SECURE === 'true', // false para 587 ✓
       requireTLS: true, // ← ADD: força STARTTLS
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
       },
       tls: {
         rejectUnauthorized: false, // ← ADD: evita erro de certificado em alguns deploys
@@ -47,7 +47,7 @@ export async function sendEmail(to, subject, text) {
     console.log('Conexão SMTP ok');
 
     const info = await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+      from: process.env.SMTP_USER,
       to,
       subject,
       text,
