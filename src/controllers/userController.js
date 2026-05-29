@@ -31,6 +31,16 @@ export async function userRegister(req, reply) {
 
     const verificationToken = generateToken(8);
 
+    const verificationLink = `${process.env.NEXT_PUBLIC_API_URL}/confirm-email?email=${encodeURIComponent(email)}&token=${verificationToken}`;
+
+    // 1° — tenta enviar o email ANTES de salvar no banco
+    await sendEmail(
+      email,
+      'Código de verificação - ATOS',
+      `Seu código de verificação é: ${verificationToken}\nLink para verificação: ${verificationLink}`,
+    );
+
+    // 2° — só salva no banco se o email foi enviado com sucesso
     await registerUser(
       name,
       email,
@@ -40,17 +50,9 @@ export async function userRegister(req, reply) {
       tenantId,
     );
 
-    const verificationLink = `http://localhost:3000/confirm-email?email=${email}&token=${verificationToken}`;
-
-    await sendEmail(
-      email,
-      'Código de verificação - ATOS',
-      `Seu código de verificação é: ${verificationToken}\nlink para verificação: ${verificationLink}`,
-    );
-
     return reply
       .status(200)
-      .send({ message: 'Por favor, Verifique seu e-mail.' });
+      .send({ message: 'Por favor, verifique seu e-mail.' });
   } catch (error) {
     return reply.status(400).send({ error: error.message });
   }
