@@ -5,7 +5,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 export async function sendEmail(to, subject, text) {
   try {
     const { data, error } = await resend.emails.send({
-      from: 'ATOS <onboarding@resend.dev>', // ← funciona sem domínio próprio
+      from: 'ATOS <noreply@atosticket.com>', // ← funciona sem domínio próprio
       to,
       subject,
       text,
