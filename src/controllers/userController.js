@@ -8,6 +8,8 @@ import {
 import { generateToken } from '../utils/generateToken.js';
 import { sendEmail } from '../utils/sendEmail.js';
 import prisma from '../../lib/prisma.js';
+import 'dotenv/config';
+// adicionando dotenv
 
 // ─── REGISTER ─────────────────────────────────────────────────────────────────
 
@@ -17,7 +19,7 @@ export async function userRegister(req, reply) {
   if (!name || !email || !password || !role || !tenantId) {
     return reply
       .status(400)
-      .send({ error: 'Todos os campos são obrigatórios.' });
+      .send({ error: 'Todos os campos são obrigatórios!' });
   }
 
   const validRoles = ['admin', 'tecnico', 'usuario'];
@@ -27,11 +29,11 @@ export async function userRegister(req, reply) {
 
   try {
     const userExists = await prisma.users.findUnique({ where: { email } });
-    if (userExists) throw new Error('E-mail já cadastrado.');
+    if (userExists) throw new Error('E-mail já cadastrado!');
 
     const verificationToken = generateToken(8);
 
-    const verificationLink = `${process.env.NEXT_PUBLIC_API_URL}/confirm-email?email=${encodeURIComponent(email)}&token=${verificationToken}`;
+    const verificationLink = `${process.env.FRONTEND_URL}/confirm-email?email=${encodeURIComponent(email)}`;
 
     // 1° — tenta enviar o email ANTES de salvar no banco
     await sendEmail(
