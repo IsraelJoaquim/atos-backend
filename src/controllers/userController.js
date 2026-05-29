@@ -19,7 +19,7 @@ export async function userRegister(req, reply) {
   if (!name || !email || !password || !role || !tenantId) {
     return reply
       .status(400)
-      .send({ error: 'Todos os campos são obrigatórios!' });
+      .send({ error: 'Todos os campos são obrigatórios.' });
   }
 
   const validRoles = ['admin', 'tecnico', 'usuario'];
