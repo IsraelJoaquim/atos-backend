@@ -7,6 +7,10 @@ import webhookRoute from './routes/webhookRoute.js';
 
 const server = fastify();
 
+server.addContentTypeParser('multipart/form-data', { parseAs: 'buffer' }, (req, body, done) => {
+  done(null, body);
+});
+
 server.addHook('onRequest', (request, response, done) => {
   if (request.url === '/webhook/email') {
     return done();

@@ -1,6 +1,7 @@
 import prisma from '../../lib/prisma.js';
 import { createTicket } from '../services/ticketService.js';
 import busboy from 'busboy';
+import { Readable } from 'stream';
 
 export async function inboundEmailWebhook(req, reply) {
   try {
@@ -10,7 +11,7 @@ export async function inboundEmailWebhook(req, reply) {
       bb.on('field', (name, val) => { result[name] = val; });
       bb.on('finish', () => resolve(result));
       bb.on('error', reject);
-      req.raw.pipe(bb);
+      Readable.from(req.body).pipe(bb);
     });
 
     console.log('[WEBHOOK] Fields:', JSON.stringify(fields));
