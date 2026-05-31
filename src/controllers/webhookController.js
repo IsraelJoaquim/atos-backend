@@ -1,5 +1,5 @@
-import prisma from "../../lib/prisma";
-import { createTicket } from "../services/ticketService";
+import prisma from "../../lib/prisma.js";
+import { createTicket } from "../services/ticketService.js";
 
 export async function inboundEmailWebhook(req, reply) {
   try {
