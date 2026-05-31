@@ -1,5 +1,8 @@
-import prisma from "../../lib/prisma.js";
-import { createTicket } from "../services/ticketService.js";
+import prisma from '../../lib/prisma.js';
+import { createTicket } from '../services/ticketService.js';
+import { Resend } from 'resend';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function inboundEmailWebhook(req, reply) {
   try {
@@ -7,10 +10,21 @@ export async function inboundEmailWebhook(req, reply) {
 
     const fromEmail = data?.from?.toLowerCase();
     const title = data?.subject || 'Sem assunto';
-    const description = data?.text || data?.html || 'Sem descrição';
+    const emailId = data?.email_id;
 
     if (!fromEmail) {
       return reply.status(400).send({ error: 'Remetente não encontrado.' });
+    }
+
+    // busca o corpo completo do email via API
+    let description = 'Sem descrição';
+    if (emailId) {
+      try {
+        const email = await resend.emails.get(emailId);
+        description = email.data?.text || email.data?.html || 'Sem descrição';
+      } catch (e) {
+        console.warn('[WEBHOOK] Não foi possível buscar corpo do email:', e.message);
+      }
     }
 
     const user = await prisma.users.findUnique({
