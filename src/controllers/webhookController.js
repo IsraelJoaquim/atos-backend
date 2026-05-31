@@ -1,3 +1,6 @@
+import prisma from "../../lib/prisma";
+import { createTicket } from "../services/ticketService";
+
 export async function inboundEmailWebhook(req, reply) {
   try {
     const { data } = req.body;
