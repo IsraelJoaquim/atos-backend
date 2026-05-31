@@ -1,6 +1,6 @@
 import fastifyCors from '@fastify/cors';
 import { fastify } from 'fastify';
-import multipart from '@fastify/multipart';
+import fastifyMultipart from '@fastify/multipart';
 
 
 import authRoutes from './routes/authRoutes.js';
@@ -32,7 +32,7 @@ server.register(fastifyCors, {
 server.register(authRoutes);
 server.register(ticketRoutes);
 server.register(tenantRoutes);
-server.register(multipart)
+server.register(fastifyMultipart)
 // server.register(webhookRoute);
 
 server.get('/', async (_, response) => {
