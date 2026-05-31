@@ -15,7 +15,7 @@ server.addHook('onRequest', (request, response, done) => {
   if (request.url === '/webhook/email') {
     return done();
   }
-  
+
   const contentType = request.headers['content-type'];
   if (contentType !== 'application/json') {
     response.header('content-type', 'application/json');
