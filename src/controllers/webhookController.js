@@ -3,12 +3,22 @@ import { createTicket } from '../services/ticketService.js';
 
 export async function inboundEmailWebhook(req, reply) {
   try {
-    // Mailgun envia como form-data, não JSON
-    const fromEmail = req.body?.sender?.toLowerCase() ||
-                      req.body?.from?.toLowerCase();
-    const title = req.body?.subject || 'Sem assunto';
-    const description = req.body?.['body-plain'] ||
-                        req.body?.['body-html'] ||
+    const parts = req.parts();
+    const fields = {};
+
+    for await (const part of parts) {
+      if (part.type === 'field') {
+        fields[part.fieldname] = part.value;
+      }
+    }
+
+    console.log('[WEBHOOK] Fields:', fields);
+
+    const fromEmail = fields?.sender?.toLowerCase() ||
+                      fields?.from?.toLowerCase();
+    const title = fields?.subject || 'Sem assunto';
+    const description = fields?.['body-plain'] ||
+                        fields?.['body-html'] ||
                         'Sem descrição';
 
     if (!fromEmail) {
@@ -30,7 +40,7 @@ export async function inboundEmailWebhook(req, reply) {
       tenantId: user.tenantId,
     });
 
-    console.log(`[WEBHOOK] Chamado criado via email: ${ticket.ticket} — ${fromEmail}`);
+    console.log(`[WEBHOOK] Chamado criado: ${ticket.ticket} — ${fromEmail}`);
     return reply.status(200).send({ ticket: ticket.ticket });
   } catch (error) {
     console.error('[WEBHOOK] Erro:', error.message);
