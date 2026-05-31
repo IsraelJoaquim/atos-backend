@@ -25,18 +25,11 @@ server.addHook('onRequest', (request, response, done) => {
   done();
 });
 
-server.addContentTypeParser('multipart/form-data',(req, payload, done) =>{
-  done(null, payload)
-})
-server.register(fastifyCors, {
-  origin: '*',
-  allowedHeaders: ['Content-Type', 'Authorization'],
-});
 server.register(authRoutes);
 server.register(ticketRoutes);
 server.register(tenantRoutes);
 server.register(fastifyMultipart)
-// server.register(webhookRoute);
+server.register(webhookRoute);
 
 server.get('/', async (_, response) => {
   return response.status(200).send('API ATOS rodando!');
