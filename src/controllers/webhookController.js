@@ -1,19 +1,15 @@
-import prisma from '../../lib/prisma.js';
-import { createTicket } from '../services/ticketService.js';
-
 export async function inboundEmailWebhook(req, reply) {
   try {
-    const { from, subject, text } = req.body;
+    const { data } = req.body;
 
-    const fromEmail = from?.toLowerCase();
-    const title = subject || 'Sem assunto';
-    const description = text || 'Sem descrição';
+    const fromEmail = data?.from?.toLowerCase();
+    const title = data?.subject || 'Sem assunto';
+    const description = data?.text || data?.html || 'Sem descrição';
 
     if (!fromEmail) {
       return reply.status(400).send({ error: 'Remetente não encontrado.' });
     }
 
-    // busca usuário pelo email remetente
     const user = await prisma.users.findUnique({
       where: { email: fromEmail },
     });
