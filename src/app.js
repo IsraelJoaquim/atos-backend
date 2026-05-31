@@ -5,6 +5,7 @@ import { fastify } from 'fastify';
 import authRoutes from './routes/authRoutes.js';
 import ticketRoutes from './routes/ticketRoutes.js';
 import tenantRoutes from './routes/tenantRoutes.js';
+import webhookRoutes from './routes/webhookRoute.js';
 
 const server = fastify();
 
@@ -24,6 +25,7 @@ server.register(fastifyCors, {
 server.register(authRoutes);
 server.register(ticketRoutes);
 server.register(tenantRoutes);
+server.register(webhookRoutes);
 
 server.get('/', async (_, response) => {
   return response.status(200).send('API ATOS rodando!');
