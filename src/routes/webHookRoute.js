@@ -1,5 +1,5 @@
 import { inboundEmailWebhook } from '../controllers/webhookController.js';
 
-export default function webhookRoutes(app) {
+export default function webhookRoute(app) {
   app.post('/webhook/email', inboundEmailWebhook);
 }
