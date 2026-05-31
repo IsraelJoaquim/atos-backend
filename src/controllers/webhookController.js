@@ -1,24 +1,25 @@
 import prisma from '../../lib/prisma.js';
 import { createTicket } from '../services/ticketService.js';
+import busboy from 'busboy';
 
 export async function inboundEmailWebhook(req, reply) {
   try {
-    const parts = req.parts();
-    const fields = {};
+    const fields = await new Promise((resolve, reject) => {
+      const bb = busboy({ headers: req.headers });
+      const result = {};
+      bb.on('field', (name, val) => { result[name] = val; });
+      bb.on('finish', () => resolve(result));
+      bb.on('error', reject);
+      req.raw.pipe(bb);
+    });
 
-    for await (const part of parts) {
-      if (part.type === 'field') {
-        fields[part.fieldname] = part.value;
-      }
-    }
-
-    console.log('[WEBHOOK] Fields:', fields);
+    console.log('[WEBHOOK] Fields:', JSON.stringify(fields));
 
     const fromEmail = fields?.sender?.toLowerCase() ||
                       fields?.from?.toLowerCase();
     const title = fields?.subject || 'Sem assunto';
     const description = fields?.['body-plain'] ||
-                        fields?.['body-html'] ||
+                        fields?.['stripped-text'] ||
                         'Sem descrição';
 
     if (!fromEmail) {

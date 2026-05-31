@@ -1,6 +1,5 @@
 import fastifyCors from '@fastify/cors';
 import { fastify } from 'fastify';
-import fastifyMultipart from '@fastify/multipart';
 import authRoutes from './routes/authRoutes.js';
 import ticketRoutes from './routes/ticketRoutes.js';
 import tenantRoutes from './routes/tenantRoutes.js';
@@ -23,7 +22,6 @@ server.register(fastifyCors, {
   origin: '*',
   allowedHeaders: ['Content-Type', 'Authorization'],
 });
-server.register(fastifyMultipart);
 server.register(authRoutes);
 server.register(ticketRoutes);
 server.register(tenantRoutes);
