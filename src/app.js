@@ -28,7 +28,7 @@ server.register(fastifyCors, {
 });
 server.register(authRoutes);
 server.register(ticketRoutes);
-server.register(tenantRoutes);s
+server.register(tenantRoutes);
 server.register(webhookRoute);
 
 server.get('/', async (_, response) => {
