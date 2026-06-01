@@ -1,27 +1,33 @@
 import prisma from '../../lib/prisma.js';
 import { createTicket } from '../services/ticketService.js';
-import busboy from 'busboy';
-import { Readable } from 'stream';
 
 export async function inboundEmailWebhook(req, reply) {
   try {
-    const fields = await new Promise((resolve, reject) => {
-      const bb = busboy({ headers: req.headers });
-      const result = {};
-      bb.on('field', (name, val) => { result[name] = val; });
-      bb.on('finish', () => resolve(result));
-      bb.on('error', reject);
-      Readable.from(req.body).pipe(bb);
-    });
+    console.log('[WEBHOOK] Content-Type:', req.headers['content-type']);
+    console.log('[WEBHOOK] Body:', JSON.stringify(req.body));
 
-    console.log('[WEBHOOK] Fields:', JSON.stringify(fields));
+    // tenta pegar dados do body independente do formato
+    const body = req.body || {};
+    const fromEmail = (body?.sender || body?.from || '')
+      .replace(/.*<(.+)>/, '$1')
+      .toLowerCase()
+      .trim();
+    const title = body?.subject || 'Sem assunto';
+    const storageKey = body?.['storage-key'] || body?.['message-url'];
 
-    const fromEmail = fields?.sender?.toLowerCase() ||
-                      fields?.from?.toLowerCase();
-    const title = fields?.subject || 'Sem assunto';
-    const description = fields?.['body-plain'] ||
-                        fields?.['stripped-text'] ||
-                        'Sem descrição';
+    // busca corpo via API do Mailgun
+    let description = 'Sem descrição';
+    if (storageKey || body?.['message-url']) {
+      const url = `https://storage-us-west1.api.mailgun.net/v3/domains/mail.atosticket.com/messages/${storageKey}`;
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Basic ${Buffer.from(`api:${process.env.MAILGUN_API_KEY}`).toString('base64')}`,
+          Accept: 'message/rfc2822',
+        },
+      });
+      const data = await response.json();
+      description = data?.['body-plain'] || data?.['stripped-text'] || 'Sem descrição';
+    }
 
     if (!fromEmail) {
       return reply.status(400).send({ error: 'Remetente não encontrado.' });

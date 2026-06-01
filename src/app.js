@@ -7,7 +7,7 @@ import webhookRoute from './routes/webhookRoute.js';
 
 const server = fastify();
 
-server.addContentTypeParser('multipart/form-data', { parseAs: 'buffer' }, (req, body, done) => {
+server.addContentTypeParser('multipart/form-data', { parseAs: 'string' }, (req, body, done) => {
   done(null, body);
 });
 
@@ -28,7 +28,7 @@ server.register(fastifyCors, {
 });
 server.register(authRoutes);
 server.register(ticketRoutes);
-server.register(tenantRoutes);
+server.register(tenantRoutes);s
 server.register(webhookRoute);
 
 server.get('/', async (_, response) => {
