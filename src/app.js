@@ -7,7 +7,7 @@ import webhookRoute from './routes/webhookRoute.js';
 
 const server = fastify();
 
-server.addContentTypeParser('multipart/form-data', (req, payload, done) => {
+server.addContentTypeParser(/multipart\/form-data.*/, (req, payload, done) => {
   done(null, payload);
 });
 
