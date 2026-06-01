@@ -1,19 +1,23 @@
 import prisma from '../../lib/prisma.js';
 import { createTicket } from '../services/ticketService.js';
 import { Resend } from 'resend';
+import { Readable } from 'stream';
+
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Resend inbound
 export async function inboundMailgunWebhook(req, reply) {
-  try {
+try {
     const fields = await new Promise((resolve, reject) => {
-      const bb = busboy({ headers: req.raw.headers });
+      const bb = busboy({ headers: req.headers });
       const result = {};
       bb.on('field', (name, val) => { result[name] = val; });
       bb.on('finish', () => resolve(result));
       bb.on('error', reject);
-      req.raw.pipe(bb);
+
+      const { Readable } = await import('stream');
+      Readable.from(req.body).pipe(bb);
     });
 
     console.log('[MAILGUN] Fields:', JSON.stringify(fields));

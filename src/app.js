@@ -7,8 +7,8 @@ import webhookRoute from './routes/webhookRoute.js';
 
 const server = fastify();
 
-server.addContentTypeParser(/multipart\/.*/, (req, payload, done) => {
-  done(null, payload);
+server.addContentTypeParser(/multipart\/.*/, { parseAs: 'buffer' }, (req, body, done) => {
+  done(null, body);
 });
 
 server.addHook('onRequest', (request, response, done) => {
