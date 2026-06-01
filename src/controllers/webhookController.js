@@ -3,31 +3,22 @@ import { createTicket } from '../services/ticketService.js';
 
 export async function inboundEmailWebhook(req, reply) {
   try {
-    console.log('[WEBHOOK] Content-Type:', req.headers['content-type']);
-    console.log('[WEBHOOK] Body:', JSON.stringify(req.body));
-
-    // tenta pegar dados do body independente do formato
     const body = req.body || {};
-    const fromEmail = (body?.sender || body?.from || '')
-      .replace(/.*<(.+)>/, '$1')
-      .toLowerCase()
-      .trim();
-    const title = body?.subject || 'Sem assunto';
-    const storageKey = body?.['storage-key'] || body?.['message-url'];
 
-    // busca corpo via API do Mailgun
-    let description = 'Sem descrição';
-    if (storageKey || body?.['message-url']) {
-      const url = `https://storage-us-west1.api.mailgun.net/v3/domains/mail.atosticket.com/messages/${storageKey}`;
-      const response = await fetch(url, {
-        headers: {
-          Authorization: `Basic ${Buffer.from(`api:${process.env.MAILGUN_API_KEY}`).toString('base64')}`,
-          Accept: 'message/rfc2822',
-        },
-      });
-      const data = await response.json();
-      description = data?.['body-plain'] || data?.['stripped-text'] || 'Sem descrição';
+    // Resend format
+    let fromEmail, title, emailId;
+    if (body?.type === 'email.received' && body?.data) {
+      fromEmail = body.data.from?.toLowerCase();
+      title = body.data.subject || 'Sem assunto';
+      emailId = body.data.email_id;
+    } else {
+      // Mailgun format
+      fromEmail = (body?.sender || body?.from || '')
+        .replace(/.*<(.+)>/, '$1').toLowerCase().trim();
+      title = body?.subject || 'Sem assunto';
     }
+
+    console.log('[WEBHOOK] From:', fromEmail, 'Title:', title);
 
     if (!fromEmail) {
       return reply.status(400).send({ error: 'Remetente não encontrado.' });
@@ -43,7 +34,7 @@ export async function inboundEmailWebhook(req, reply) {
 
     const ticket = await createTicket({
       title: title.substring(0, 100),
-      description: description.substring(0, 1000),
+      description: 'Chamado aberto via email.',
       userId: user.id,
       tenantId: user.tenantId,
     });
