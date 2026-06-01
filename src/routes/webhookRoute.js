@@ -6,3 +6,4 @@ export default function webhookRoute(app) {
   app.post('/webhook/mailgun', inboundMailgunWebhook);
   app.post('/webhook/cloudmailin', inboundCloudmailinWebhook);
 }
+//
