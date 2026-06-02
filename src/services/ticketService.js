@@ -41,7 +41,7 @@ export async function getTickets({ tenantId, userId, role }) {
   const tickets = await prisma.chamados.findMany({
     where,
     include: {
-      user: { select: { id: true, name: true } },
+      user: { select: { id: true, name: true, email: true } },
       movimentacoes: {
         orderBy: { createdAt: 'asc' },
       },
@@ -56,7 +56,7 @@ export async function getTicketById(ticketId, tenantId, userId, role) {
   const ticket = await prisma.chamados.findUnique({
     where: { id: ticketId },
     include: {
-      user: { select: { id: true, name: true } },
+      user: { select: { id: true, name: true, email:true } },
       movimentacoes: {
         orderBy: { createdAt: 'asc' },
       },
