@@ -2,6 +2,7 @@ import {
   registerUser,
   loginUser,
   softDeleteUser,
+  updateUser,
   verifyEmailToken,
   getUsers,
 } from '../services/userService.js';
