@@ -112,6 +112,26 @@ export async function getUsersController(req, reply) {
   }
 }
 
+// ─── UPDATE USER ──────────────────────────────────────────────────────────────
+
+export async function updateUserController(req, reply) {
+  try {
+    if (req.user.role !== 'admin') {
+      return reply.status(403).send({ error: 'Apenas administradores podem editar usuários.' });
+    }
+
+    if (req.params.id === req.user.id) {
+      return reply.status(400).send({ error: 'Você não pode editar sua própria conta por aqui.' });
+    }
+
+    const { role, active } = req.body;
+    const result = await updateUser(req.params.id, req.user.tenantId, { role, active });
+    return reply.send(result);
+  } catch (error) {
+    return reply.status(400).send({ error: error.message });
+  }
+}
+
 // ─── SOFT DELETE ──────────────────────────────────────────────────────────────
 
 export async function userSoftDelete(req, reply) {

@@ -4,7 +4,7 @@ import prisma from '../../lib/prisma.js';
 
 // ─── REGISTER ─────────────────────────────────────────────────────────────────
 
-export async function registerUser(name, email, password, role, verificationToken, tenantId) {
+export async function registerUser(name, email, password, active, role, verificationToken, tenantId) {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   const user = await prisma.users.create({
@@ -15,6 +15,7 @@ export async function registerUser(name, email, password, role, verificationToke
       role,
       verification_token: verificationToken,
       email_verified: false,
+      active: false,
       tenantId,
     },
   });
@@ -23,7 +24,7 @@ export async function registerUser(name, email, password, role, verificationToke
 
 // ─── VERIFY EMAIL ─────────────────────────────────────────────────────────────
 
-export async function verifyEmailToken(email, token) {
+export async function verifyEmailToken(email, token, active) {
   const user = await prisma.users.findUnique({ where: { email } });
 
   if (!user) throw new Error('Usuário não encontrado.');
@@ -32,6 +33,7 @@ export async function verifyEmailToken(email, token) {
   await prisma.users.update({
     where: { email },
     data: {
+      active:true,
       email_verified: true,
       verification_token: null,
     },
@@ -93,6 +95,30 @@ export async function getUsers(tenantId) {
   });
   return users;
 }
+
+// ─── UPDATE USER ──────────────────────────────────────────────────────────────
+
+export async function updateUser(id, tenantId, { role, active }) {
+  if (!id || !tenantId) throw new Error('ID e tenantId são obrigatórios.');
+
+  const validRoles = ['admin', 'tecnico', 'usuario'];
+  if (role && !validRoles.includes(role)) throw new Error('Role inválida.');
+
+  const data = {};
+  if (role !== undefined) data.role = role;
+  if (active !== undefined) data.active = active;
+
+  if (Object.keys(data).length === 0) throw new Error('Nada para atualizar.');
+
+  const result = await prisma.users.updateMany({
+    where: { id, tenantId },
+    data,
+  });
+
+  if (result.count === 0) throw new Error('Usuário não encontrado.');
+  return { message: 'Usuário atualizado com sucesso.' };
+}
+
 
 // ─── SOFT DELETE ──────────────────────────────────────────────────────────────
 
