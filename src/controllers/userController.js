@@ -48,6 +48,7 @@ export async function userRegister(req, reply) {
       name,
       email,
       password,
+      false,
       role,
       verificationToken,
       tenantId,
