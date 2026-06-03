@@ -62,7 +62,7 @@ export async function loginUser(email, password) {
   const token = jwt.sign(
     { id: user.id, name: user.name, role: user.role, tenantId: user.tenantId },
     process.env.JWT_SECRET,
-    { expiresIn: '1m' },
+    { expiresIn: '1h' },
   );
 
   // retorna apenas campos necessários, sem senha nem token de verificação
