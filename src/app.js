@@ -1,6 +1,7 @@
 import fastifyCors from '@fastify/cors';
 import { fastify } from 'fastify';
 import authRoutes from './routes/authRoutes.js';
+import passwordRoutes from './routes/passwordRoutes.js'
 import ticketRoutes from './routes/ticketRoutes.js';
 import tenantRoutes from './routes/tenantRoutes.js';
 import webhookRoute from './routes/webhookRoute.js';
@@ -26,6 +27,7 @@ server.register(fastifyCors, {
   origin: '*',
   allowedHeaders: ['Content-Type', 'Authorization'],
 });
+server.register(passwordRoutes)
 server.register(authRoutes);
 server.register(ticketRoutes);
 server.register(tenantRoutes);

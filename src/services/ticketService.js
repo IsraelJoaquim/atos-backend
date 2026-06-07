@@ -33,10 +33,8 @@ export async function createTicket({ title, description, userId, tenantId }) {
 // ─── READ ─────────────────────────────────────────────────────────────────────
 
 export async function getTickets({ tenantId, userId, role }) {
-  // usuario só vê os próprios chamados; tecnico e admin veem todos do tenant
-  const where = role === 'usuario'
-    ? { tenantId, userId }
-    : { tenantId };
+  // usuario só vê os próprios chamados; atendente e admin veem todos do tenant
+  const where = role === 'usuario' ? { tenantId, userId } : { tenantId };
 
   const tickets = await prisma.chamados.findMany({
     where,
@@ -56,7 +54,7 @@ export async function getTicketById(ticketId, tenantId, userId, role) {
   const ticket = await prisma.chamados.findUnique({
     where: { id: ticketId },
     include: {
-      user: { select: { id: true, name: true, email:true } },
+      user: { select: { id: true, name: true, email: true } },
       movimentacoes: {
         orderBy: { createdAt: 'asc' },
       },
@@ -73,12 +71,21 @@ export async function getTicketById(ticketId, tenantId, userId, role) {
 
 // ─── UPDATE CONTENT (usuario) ─────────────────────────────────────────────────
 
-export async function updateTicketContent({ ticketId, userId, tenantId, title, description }) {
+export async function updateTicketContent({
+  ticketId,
+  userId,
+  tenantId,
+  title,
+  description,
+}) {
   const ticket = await prisma.chamados.findUnique({ where: { id: ticketId } });
 
-  if (!ticket || ticket.tenantId !== tenantId) throw new Error('Chamado não encontrado.');
-  if (ticket.userId !== userId) throw new Error('Você não tem permissão para editar este chamado.');
-  if (ticket.status !== 'aberto') throw new Error('Só é possível editar chamados em aberto.');
+  if (!ticket || ticket.tenantId !== tenantId)
+    throw new Error('Chamado não encontrado.');
+  if (ticket.userId !== userId)
+    throw new Error('Você não tem permissão para editar este chamado.');
+  if (ticket.status !== 'aberto')
+    throw new Error('Só é possível editar chamados em aberto.');
 
   return prisma.chamados.update({
     where: { id: ticketId },
@@ -86,20 +93,22 @@ export async function updateTicketContent({ ticketId, userId, tenantId, title, d
   });
 }
 
-// ─── UPDATE STATUS (tecnico) ──────────────────────────────────────────────────
+// ─── UPDATE STATUS (atendente) ──────────────────────────────────────────────────
 
 export async function updateTicketStatus({
   ticketId,
   tenantId,
-  tecnicoId,
-  tecnicoNome,
+  atendenteId,
+  atendenteNome,
   novoStatus,
   observacao,
 }) {
   const ticket = await prisma.chamados.findUnique({ where: { id: ticketId } });
 
-  if (!ticket || ticket.tenantId !== tenantId) throw new Error('Chamado não encontrado.');
-  if (ticket.status === 'finalizado') throw new Error('Este chamado já foi finalizado.');
+  if (!ticket || ticket.tenantId !== tenantId)
+    throw new Error('Chamado não encontrado.');
+  if (ticket.status === 'finalizado')
+    throw new Error('Este chamado já foi finalizado.');
 
   const statusAntes = ticket.status;
 
@@ -109,8 +118,8 @@ export async function updateTicketStatus({
       where: { id: ticketId },
       data: {
         status: novoStatus,
-        assignedToId: tecnicoId,
-        assignedToName: tecnicoNome,
+        assignedToId: atendenteId,
+        assignedToName: atendenteNome,
       },
       include: {
         user: { select: { id: true, name: true } },
@@ -120,8 +129,8 @@ export async function updateTicketStatus({
     prisma.movimentacoes.create({
       data: {
         ticketId,
-        tecnicoId,
-        tecnicoNome,
+        atendenteId,
+        atendenteNome,
         statusAntes,
         statusDepois: novoStatus,
         observacao: observacao || null,
@@ -137,7 +146,8 @@ export async function updateTicketStatus({
 export async function deleteTicket(ticketId, tenantId) {
   const ticket = await prisma.chamados.findUnique({ where: { id: ticketId } });
 
-  if (!ticket || ticket.tenantId !== tenantId) throw new Error('Chamado não encontrado.');
+  if (!ticket || ticket.tenantId !== tenantId)
+    throw new Error('Chamado não encontrado.');
 
   await prisma.chamados.delete({ where: { id: ticketId } });
 }

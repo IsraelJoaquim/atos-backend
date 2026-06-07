@@ -10,7 +10,7 @@ datasource db {
 
 enum Role {
   admin
-  tecnico
+  atendente
   usuario
 }
 
@@ -31,17 +31,19 @@ model Tenants {
 }
 
 model Users {
-  id                 String   @id @default(uuid())
-  tenantId           String
-  name               String
-  email              String   @unique
-  password           String
-  role               Role
-  active             Boolean  @default(true)
-  verification_token String?
-  email_verified     Boolean  @default(false)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id                  String    @id @default(uuid())
+  tenantId            String
+  name                String
+  email               String    @unique
+  password            String
+  role                Role
+  active              Boolean   @default(true)
+  verification_token  String?
+  email_verified      Boolean   @default(false)
+  reset_token         String?
+  reset_token_expires DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   tenant        Tenants         @relation(fields: [tenantId], references: [id])
   chamados      Chamados[]
@@ -69,13 +71,13 @@ model Chamados {
 model Movimentacoes {
   id           String   @id @default(uuid())
   ticketId     String
-  tecnicoId    String?
-  tecnicoNome  String?
+  atendenteId    String?
+  atendenteNome  String?
   statusAntes  Status
   statusDepois Status
   observacao   String?
   createdAt    DateTime @default(now())
 
   ticket  Chamados @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  tecnico Users?   @relation(fields: [tecnicoId], references: [id])
+  atendente Users?   @relation(fields: [atendenteId], references: [id])
 }

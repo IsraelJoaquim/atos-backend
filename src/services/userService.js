@@ -4,7 +4,15 @@ import prisma from '../../lib/prisma.js';
 
 // ─── REGISTER ─────────────────────────────────────────────────────────────────
 
-export async function registerUser(name, email, password, active, role, verificationToken, tenantId) {
+export async function registerUser(
+  name,
+  email,
+  password,
+  active,
+  role,
+  verificationToken,
+  tenantId,
+) {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   const user = await prisma.users.create({
@@ -33,7 +41,7 @@ export async function verifyEmailToken(email, token, active) {
   await prisma.users.update({
     where: { email },
     data: {
-      active:true,
+      active: true,
       email_verified: true,
       verification_token: null,
     },
@@ -46,11 +54,11 @@ export async function verifyEmailToken(email, token, active) {
 
 export async function loginUser(email, password) {
   const user = await prisma.users.findUnique({
-  where: { email },
-  include: {
-    tenant: true,
-  },
-});
+    where: { email },
+    include: {
+      tenant: true,
+    },
+  });
 
   if (!user) throw new Error('Usuário não encontrado.');
   if (!user.email_verified) throw new Error('E-mail não verificado.');
@@ -66,8 +74,7 @@ export async function loginUser(email, password) {
   );
 
   // retorna apenas campos necessários, sem senha nem token de verificação
-  const {password: _,
-    verification_token: __,tenant,...safeUser} = user;
+  const { password: _, verification_token: __, tenant, ...safeUser } = user;
   return {
     token,
     user: {
@@ -101,7 +108,7 @@ export async function getUsers(tenantId) {
 export async function updateUser(id, tenantId, { role, active }) {
   if (!id || !tenantId) throw new Error('ID e tenantId são obrigatórios.');
 
-  const validRoles = ['admin', 'tecnico', 'usuario'];
+  const validRoles = ['admin', 'atendente', 'usuario'];
   if (role && !validRoles.includes(role)) throw new Error('Role inválida.');
 
   const data = {};
@@ -118,7 +125,6 @@ export async function updateUser(id, tenantId, { role, active }) {
   if (result.count === 0) throw new Error('Usuário não encontrado.');
   return { message: 'Usuário atualizado com sucesso.' };
 }
-
 
 // ─── SOFT DELETE ──────────────────────────────────────────────────────────────
 

@@ -15,7 +15,9 @@ export async function createTicketController(req, reply) {
     const { id: userId, tenantId } = req.user;
 
     if (!title || !description) {
-      return reply.status(400).send({ error: 'Título e descrição são obrigatórios.' });
+      return reply
+        .status(400)
+        .send({ error: 'Título e descrição são obrigatórios.' });
     }
 
     const ticket = await createTicket({ title, description, userId, tenantId });
@@ -41,7 +43,8 @@ export async function getTicketByIdController(req, reply) {
   try {
     const { id: userId, tenantId, role } = req.user;
     const ticket = await getTicketById(req.params.id, tenantId, userId, role);
-    if (!ticket) return reply.status(404).send({ error: 'Chamado não encontrado.' });
+    if (!ticket)
+      return reply.status(404).send({ error: 'Chamado não encontrado.' });
     return reply.send(ticket);
   } catch (error) {
     return reply.status(500).send({ error: error.message });
@@ -60,7 +63,9 @@ export async function updateTicketContentController(req, reply) {
     const { id: userId, tenantId } = req.user;
 
     if (!title || !description) {
-      return reply.status(400).send({ error: 'Título e descrição são obrigatórios.' });
+      return reply
+        .status(400)
+        .send({ error: 'Título e descrição são obrigatórios.' });
     }
 
     const ticket = await updateTicketContent({
@@ -77,16 +82,16 @@ export async function updateTicketContentController(req, reply) {
   }
 }
 
-// ─── UPDATE STATUS (tecnico) ──────────────────────────────────────────────────
+// ─── UPDATE STATUS (atendente) ──────────────────────────────────────────────────
 
 export async function updateTicketStatusController(req, reply) {
   try {
-    if (req.user.role !== 'tecnico' && req.user.role !== 'admin') {
+    if (req.user.role !== 'atendente' && req.user.role !== 'admin') {
       return reply.status(403).send({ error: 'Acesso negado.' });
     }
 
     const { status, observacao } = req.body;
-    const { id: tecnicoId, name: tecnicoNome, tenantId } = req.user;
+    const { id: atendenteId, name: atendenteNome, tenantId } = req.user;
 
     if (!status) {
       return reply.status(400).send({ error: 'Status é obrigatório.' });
@@ -100,8 +105,8 @@ export async function updateTicketStatusController(req, reply) {
     const ticket = await updateTicketStatus({
       ticketId: req.params.id,
       tenantId,
-      tecnicoId,
-      tecnicoNome,
+      atendenteId,
+      atendenteNome,
       novoStatus: status,
       observacao,
     });
@@ -117,7 +122,9 @@ export async function updateTicketStatusController(req, reply) {
 export async function deleteTicketController(req, reply) {
   try {
     if (req.user.role !== 'admin') {
-      return reply.status(403).send({ error: 'Apenas administradores podem deletar chamados.' });
+      return reply
+        .status(403)
+        .send({ error: 'Apenas administradores podem deletar chamados.' });
     }
 
     await deleteTicket(req.params.id, req.user.tenantId);

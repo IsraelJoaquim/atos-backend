@@ -99,7 +99,7 @@ CREATE TABLE users (
     name VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
-    role ENUM('cliente', 'tecnico', 'admin') DEFAULT 'cliente',
+    role ENUM('cliente', 'atendente', 'admin') DEFAULT 'cliente',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -199,7 +199,7 @@ export function authMiddleware(req, reply, done) {
 🚀 Próximos Passos
 Agora que temos o ambiente configurado, o banco de dados estruturado e a autenticação implementada, podemos seguir para:
 ✅ CRUD de Chamados – Criar, listar, atualizar e encerrar chamados.
-✅ Sistema de Permissões – Apenas técnicos podem mudar status.
+✅ Sistema de Permissões – Apenas atendentes podem mudar status.
 ✅ Painel Administrativo – Relatórios e gestão de usuários.
 
 Isso está bem detalhado? Quer que quebre ainda mais alguma parte? 🚀
